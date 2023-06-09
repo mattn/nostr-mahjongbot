@@ -74,10 +74,7 @@ func judge2(ctx Result) bool {
 			if judge2(ctx) {
 				return true
 			}
-		}
-	}
-	for n := 0; n < len(ctx.hai)-2; n++ {
-		if ctx.hai[n] > 0 && ctx.hai[n+1] > 0 && ctx.hai[n+2] > 0 {
+		} else if n < len(ctx.hai)-2 && ctx.hai[n] > 0 && ctx.hai[n+1] > 0 && ctx.hai[n+2] > 0 {
 			ctx.mentu = append(ctx.mentu, n+0, n+1, n+2)
 			ctx.hai[n+0] -= 1
 			ctx.hai[n+1] -= 1
@@ -114,6 +111,23 @@ func judge1(hai []int) Result {
 		}
 		ctx.atama = -1
 	}
+	/*
+		a, b := hai[0], hai[1]
+
+		for i := 0; i < 7; i++ {
+			r := a % 3
+			if b >= r && hai[i+2] >= r {
+				a = b - r
+				b = hai[i+2] - r
+			} else {
+				return ctx
+			}
+		}
+		if a%3 == 0 && b%3 == 0 {
+			fmt.Println(111)
+			return ctx
+		}
+	*/
 	return ctx
 }
 
@@ -237,6 +251,23 @@ func makeImage(hai []int) (string, error) {
 	}
 	return upload(&buf)
 }
+
+/*
+func init() {
+	var g game
+	//g.Data.Mountain = []int{4, 4, 4, 4, 4, 4, 4, 4, 4}
+	//g.Data.Hai = []int{0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8}
+	//g.Data.Hai = []int{0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 7, 8, 8, 8}
+	//g.Data.Hai = []int{1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8}
+	sort.Ints(g.Data.Hai)
+	//sort.Ints(g.Data.Hai)
+	log.Print(g.judge())
+	for i := 0; i < len(g.Data.Hai)/2; i++ {
+		g.Data.Hai[i], g.Data.Hai[len(g.Data.Hai)-i-1] = g.Data.Hai[len(g.Data.Hai)-i-1], g.Data.Hai[i]
+	}
+	log.Fatal(g.judge())
+}
+*/
 
 func main() {
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
