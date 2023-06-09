@@ -37,7 +37,20 @@ const name = "nostr-mahjongbot"
 const version = "0.0.18"
 
 var revision = "HEAD"
+
+const help = `
+This is a small Mahjong game. The game is played by mentions to me. I deal Mahjong tiles and you specify the tiles with the "drop" command to discard. If you want to judge, execute the "check" command.
+
+start
+  Start the game.
+drop NUM
+  Drop the NUMBER tile.
+check
+  Judge the tiles.
+`
+
 var (
+	cmdHelp  = regexp.MustCompile(`\bhelp$`)
 	cmdStart = regexp.MustCompile(`\bstart$`)
 	cmdDrop  = regexp.MustCompile(`\bdrop ([0-9]+)$`)
 	cmdCheck = regexp.MustCompile(`\bcheck$`)
@@ -263,7 +276,24 @@ func main() {
 
 		var g game
 		etag := ev.Tags.GetFirst([]string{"e"})
-		if etag == nil && cmdStart.MatchString(ev.Content) {
+		if cmdHelp.MatchString(ev.Content) {
+			from := ev.PubKey
+
+			ev.PubKey = pub
+			ev.Tags = nostr.Tags{}
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
+			ev.CreatedAt = nostr.Now()
+			ev.Kind = nostr.KindTextNote
+
+			ev.Content = help
+			if err := ev.Sign(sk); err != nil {
+				log.Println(err)
+				log.Println("fail sign", err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+			return c.JSON(http.StatusOK, ev)
+		} else if etag == nil && cmdStart.MatchString(ev.Content) {
 			from := ev.PubKey
 
 			ev.PubKey = pub
