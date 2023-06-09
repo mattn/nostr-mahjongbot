@@ -309,7 +309,7 @@ func main() {
 			}
 			return c.JSON(http.StatusOK, ev)
 		} else if etag != nil && cmdDrop.MatchString(ev.Content) {
-			from := ev.Pubkey
+			from := ev.PubKey
 
 			ev.PubKey = pub
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
