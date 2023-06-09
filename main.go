@@ -39,7 +39,7 @@ const version = "0.0.14"
 var revision = "HEAD"
 var (
 	cmdStart = regexp.MustCompile(`\bstart$`)
-	cmdDrop  = regexp.MustCompile(`\bdrop [0-9]$`)
+	cmdDrop  = regexp.MustCompile(`\bdrop ([0-9])$`)
 	cmdJudge = regexp.MustCompile(`\bjudge$`)
 
 	//go:embed static
