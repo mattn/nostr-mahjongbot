@@ -282,7 +282,7 @@ func main() {
 			}
 		}
 		if etag == nil {
-			etag = ev.Tags.GetFirst([]string{"e"})
+			etag = ev.Tags.GetLast([]string{"e"})
 		}
 
 		if cmdHelp.MatchString(ev.Content) {
