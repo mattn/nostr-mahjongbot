@@ -39,9 +39,9 @@ const version = "0.0.6"
 
 var revision = "HEAD"
 var (
-	cmdStart = regexp.MustCompile(` start$`)
-	cmdDrop  = regexp.MustCompile(` drop [0-9]$`)
-	cmdJudge = regexp.MustCompile(` judge$`)
+	cmdStart = regexp.MustCompile(`\bstart$`)
+	cmdDrop  = regexp.MustCompile(`\bdrop [0-9]$`)
+	cmdJudge = regexp.MustCompile(`\bjudge$`)
 
 	//go:embed static
 	assets embed.FS
