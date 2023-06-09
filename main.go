@@ -302,18 +302,12 @@ func main() {
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
-			g.ID = ev.ID
 			g.Npub = from
 			g.Data.Mountain = []int{4, 4, 4, 4, 4, 4, 4, 4, 4}
 			for n := 0; n < 14; n++ {
 				g.take()
 			}
 			g.Count++
-			_, err = bundb.NewInsert().Model(&g).Exec(context.Background())
-			if err != nil {
-				log.Println("fail insert", err)
-				return c.JSON(http.StatusInternalServerError, err.Error())
-			}
 			img, err := makeImage(g.Data.Hai)
 			if err != nil {
 				log.Println("fail makeImage", err)
@@ -325,6 +319,14 @@ func main() {
 				log.Println("fail sign", err)
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
+
+			g.ID = ev.ID
+			_, err = bundb.NewInsert().Model(&g).Exec(context.Background())
+			if err != nil {
+				log.Println("fail insert", err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+
 			return c.JSON(http.StatusOK, ev)
 		} else if etag != nil && cmdDrop.MatchString(ev.Content) {
 			from := ev.PubKey
@@ -399,6 +401,17 @@ func main() {
 			}
 			g.Count++
 
+			img, err := makeImage(g.Data.Hai)
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+			ev.Content = img
+			if err := ev.Sign(sk); err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+
 			tx, err := bundb.Begin()
 			if err != nil {
 				log.Println(err)
@@ -412,7 +425,6 @@ func main() {
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
 			g.ID = ev.ID
-
 			_, err = tx.NewInsert().Model(&g).Exec(context.Background())
 			if err != nil {
 				log.Println(err)
@@ -420,16 +432,6 @@ func main() {
 			}
 			tx.Commit()
 
-			img, err := makeImage(g.Data.Hai)
-			if err != nil {
-				log.Println(err)
-				return c.JSON(http.StatusInternalServerError, err.Error())
-			}
-			ev.Content = img
-			if err := ev.Sign(sk); err != nil {
-				log.Println(err)
-				return c.JSON(http.StatusInternalServerError, err.Error())
-			}
 			return c.JSON(http.StatusOK, ev)
 		} else if cmdCheck.MatchString(ev.Content) {
 			from := ev.PubKey
