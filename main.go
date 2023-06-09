@@ -165,7 +165,6 @@ type game struct {
 	ID            string    `bun:"id,pk,notnull" json:"id"`
 	Npub          string    `bun:"npub,notnull" json:"npub"`
 	Data          Data      `bun:"data,type:jsonb" json:"data"`
-	Ref           string    `bun:"ref,notnull" json:"ref"`
 	Count         int       `bun:"count,notnull" json:"count"`
 	CreatedAt     time.Time `bun:"created_at,notnull,default:current_timestamp" json:"created_at"`
 }
@@ -407,13 +406,12 @@ func main() {
 			}
 			defer tx.Rollback()
 
-			_, err = tx.NewDelete().Model((*game)(nil)).Where("ID = ?", g.Ref).Exec(context.Background())
+			_, err = tx.NewDelete().Model((*game)(nil)).Where("ID = ?", etag.Value()).Exec(context.Background())
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
 			g.ID = ev.ID
-			g.Ref = etag.Value()
 
 			_, err = tx.NewInsert().Model(&g).Exec(context.Background())
 			if err != nil {
@@ -477,7 +475,7 @@ func main() {
 			}
 			defer tx.Rollback()
 
-			_, err = tx.NewDelete().Model((*game)(nil)).Where("ID = ?", g.Ref).Exec(context.Background())
+			_, err = tx.NewDelete().Model((*game)(nil)).Where("ID = ?", etag.Value()).Exec(context.Background())
 			if err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, err.Error())
