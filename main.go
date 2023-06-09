@@ -44,7 +44,7 @@ This is a small Mahjong game. The game is played by mentions to me. I deal Mahjo
 start
   Start the game.
 drop NUM
-  Drop the NUMBER tile.
+  Drop the NUM tile.
 check
   Judge the tiles.
 `
@@ -337,14 +337,14 @@ func main() {
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
-			//if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
-			//	ev.Content = "Still under development"
-			//	if err := ev.Sign(sk); err != nil {
-			//		log.Println(err)
-			//		return c.JSON(http.StatusInternalServerError, err.Error())
-			//	}
-			//	return c.JSON(http.StatusOK, ev)
-			//}
+			if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
+				ev.Content = "Still under development"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
 
 			matched := cmdDrop.FindStringSubmatch(ev.Content)
 			if len(matched) != 2 {
@@ -443,14 +443,14 @@ func main() {
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
-			//if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
-			//	ev.Content = "Still under development"
-			//	if err := ev.Sign(sk); err != nil {
-			//		log.Println(err)
-			//		return c.JSON(http.StatusInternalServerError, err.Error())
-			//	}
-			//	return c.JSON(http.StatusOK, ev)
-			//}
+			if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
+				ev.Content = "Still under development"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
 
 			err = bundb.NewSelect().Model((*game)(nil)).Where("ID = ?", etag.Value()).Scan(context.Background(), &g)
 			if err != nil {
