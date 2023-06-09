@@ -369,6 +369,7 @@ func main() {
 			}
 
 			if !g.drop(v - 1) {
+				log.Println(g.Data)
 				ev.Content = "牌を捨てる事ができません"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
