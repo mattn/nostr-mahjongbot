@@ -23,6 +23,7 @@ import (
 
 	"math/rand"
 
+	"github.com/golang/freetype/truetype"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
@@ -30,6 +31,9 @@ import (
 	"github.com/nbd-wtf/go-nostr/nip19"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/math/fixed"
 )
 
 const name = "nostr-mahjongbot"
@@ -125,17 +129,6 @@ func (g *game) judge() *Result {
 	return &ret
 }
 
-func (g *game) drop(v int) bool {
-	for i := 0; i < len(g.Data.Hai); i++ {
-		if g.Data.Hai[i] == v {
-			copy(g.Data.Hai[i:], g.Data.Hai[i+1:])
-			g.Data.Hai = g.Data.Hai[:len(g.Data.Hai)-1]
-			return true
-		}
-	}
-	return false
-}
-
 func (g *game) take() int {
 	rest := 0
 	for _, v := range g.Data.Mountain {
@@ -192,10 +185,26 @@ func upload(buf *bytes.Buffer) (string, error) {
 }
 
 func makeImage(hai []int) (string, error) {
-	bounds := image.Rect(0, 0, (128+2)*14+3+4, 183+4)
+	bounds := image.Rect(0, 0, (128+2)*14+3+4, 183+4+30)
 
 	dst := image.NewRGBA(bounds)
 
+	ttfFont, err := truetype.Parse(goregular.TTF)
+	if err != nil {
+		return "", err
+	}
+
+	face := truetype.NewFace(ttfFont, &truetype.Options{
+		Size:    30,
+		DPI:     72,
+		Hinting: font.HintingFull,
+	})
+	dr := &font.Drawer{
+		Dst:  dst,
+		Src:  image.Black,
+		Face: face,
+		Dot:  fixed.Point26_6{},
+	}
 	for i, v := range hai {
 		f, err := assets.Open(fmt.Sprintf("static/mahjong-p%d.png", v+1))
 		if err != nil {
@@ -206,24 +215,23 @@ func makeImage(hai []int) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		off := 0
-		if i == 13 {
-			off = 2
-		}
 		draw.Draw(
 			dst,
 			image.Rect(
-				i*(emoji.Bounds().Dx()+2)+off+2,
+				i*(emoji.Bounds().Dx()+2)+2,
 				2,
-				(i+1)*(emoji.Bounds().Dx()+2)+off,
+				(i+1)*(emoji.Bounds().Dx()+2),
 				emoji.Bounds().Dy(),
 			),
 			emoji, image.ZP,
 			draw.Over)
+		dr.Dot.X = fixed.I(i*(emoji.Bounds().Dx()+2) + 128/2)
+		dr.Dot.Y = fixed.I(210)
+		dr.DrawString(fmt.Sprint(i + 1))
 	}
 
 	var buf bytes.Buffer
-	err := png.Encode(&buf, dst)
+	err = png.Encode(&buf, dst)
 	if err != nil {
 		return "", err
 	}
@@ -367,7 +375,7 @@ func main() {
 				return c.JSON(http.StatusOK, ev)
 			}
 			v, err := strconv.Atoi(matched[1])
-			if v < 1 || v > 9 {
+			if v < 1 || v > 14 {
 				ev.Content = "Invalid number"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
@@ -394,14 +402,9 @@ func main() {
 				return c.JSON(http.StatusOK, ev)
 			}
 
-			if !g.drop(v - 1) {
-				ev.Content = "No such tiles"
-				if err := ev.Sign(sk); err != nil {
-					log.Println(err)
-					return c.JSON(http.StatusInternalServerError, err.Error())
-				}
-				return c.JSON(http.StatusOK, ev)
-			}
+			copy(g.Data.Hai[v-1:], g.Data.Hai[v:])
+			g.Data.Hai = g.Data.Hai[:len(g.Data.Hai)-1]
+
 			if g.take() == -1 {
 				ev.Content = "No more tiles"
 				if err := ev.Sign(sk); err != nil {
@@ -496,7 +499,7 @@ func main() {
 
 			result := g.judge()
 			if result == nil {
-				ev.Content = "Misjudge, game over"
+				ev.Content = "Misjudge, game over 😵"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -505,9 +508,9 @@ func main() {
 			}
 
 			if g.Count == 1 {
-				ev.Content = fmt.Sprint("Win, game over (天和)")
+				ev.Content = fmt.Sprint("Win, game over (天和) 😳")
 			} else {
-				ev.Content = fmt.Sprintf("Win, game over (count: %d)", g.Count)
+				ev.Content = fmt.Sprintf("Win, game over (count: %d) 😆", g.Count)
 			}
 			if err := ev.Sign(sk); err != nil {
 				log.Println(err)
