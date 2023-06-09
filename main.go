@@ -40,7 +40,7 @@ var revision = "HEAD"
 var (
 	cmdStart = regexp.MustCompile(`\bstart$`)
 	cmdDrop  = regexp.MustCompile(`\bdrop ([0-9])$`)
-	cmdJudge = regexp.MustCompile(`\bjudge$`)
+	cmdCheck = regexp.MustCompile(`\bcheck$`)
 
 	//go:embed static
 	assets embed.FS
@@ -100,12 +100,12 @@ func judge1(hai []int) Result {
 	return ctx
 }
 
-func judge(chai []int) *Result {
-	hai := []int{0, 0, 0, 0, 0, 0, 0, 0, 0}
-	for n := 0; n < len(chai); n++ {
-		hai[chai[n]] += 1
+func (g *game) judge() *Result {
+	thai := []int{0, 0, 0, 0, 0, 0, 0, 0, 0}
+	for n := 0; n < len(g.Data.Hai); n++ {
+		thai[g.Data.Hai[n]] += 1
 	}
-	ret := judge1(hai)
+	ret := judge1(thai)
 	if ret.atama == -1 {
 		return nil
 	}
@@ -141,23 +141,6 @@ func (g *game) take() int {
 		}
 	}
 }
-
-/*
-let mountain = [4, 4, 4, 4, 4, 4, 4, 4, 4]
-let hai = []
-for (let n = 0; n < 13; n++) hai.push(take(mountain))
-hai = hai.sort()
-let t = take(mountain)
-hai.push(t)
-hai = hai.sort()
-let ret = judge(hai)
-if (ret != null) {
-  //console.log(hai)
-  console.log(JSON.stringify(hai))
-  console.log(ret.mentu)
-  console.log(ret.atama)
-}
-*/
 
 type Data struct {
 	Mountain []int `json:"mountain"`
@@ -407,6 +390,73 @@ func main() {
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
 			ev.Content = img
+			if err := ev.Sign(sk); err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+			return c.JSON(http.StatusOK, ev)
+		} else if cmdCheck.MatchString(ev.Content) {
+			from := ev.PubKey
+
+			ev.PubKey = pub
+			ev.Tags = nostr.Tags{}
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
+			ev.CreatedAt = nostr.Now()
+			ev.Kind = nostr.KindTextNote
+
+			if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
+				ev.Content = "まだ開発中だよ"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+
+			err = bundb.NewSelect().Model((*game)(nil)).Where("ID = ?", etag.Value()).Scan(context.Background(), &g)
+			if err != nil {
+				ev.Content = "不正な参照です"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+			if g.Npub != from {
+				ev.Content = "ゲームを始めたユーザではありません"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+
+			result := g.judge()
+			if result == nil {
+				ev.Content = "判定ミス"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+
+			tx, err := bundb.Begin()
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+			defer tx.Rollback()
+
+			_, err = tx.NewDelete().Model((*game)(nil)).Where("ID = ?", g.Ref).Exec(context.Background())
+			if err != nil {
+				log.Println(err)
+				return c.JSON(http.StatusInternalServerError, err.Error())
+			}
+			tx.Commit()
+
+			ev.Content = "アガリ"
 			if err := ev.Sign(sk); err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, err.Error())
