@@ -1,0 +1,7 @@
+secret.yaml
+k8s
+*.sh
+nostr-mahjongbot
+backup
+tmp
+test.json
