@@ -277,7 +277,7 @@ func main() {
 		var etag *nostr.Tag
 		for i := 0; i < len(ev.Tags); i++ {
 			e := ev.Tags[i]
-			if e.Key() == "e" && len(e) > 2 && e[2] == "reply" {
+			if e.Key() == "e" && len(e) > 3 && e[3] == "reply" {
 				etag = &e
 			}
 		}
