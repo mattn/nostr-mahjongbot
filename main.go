@@ -38,7 +38,7 @@ import (
 
 const name = "nostr-mahjongbot"
 
-const version = "0.0.27"
+const version = "0.0.28"
 
 var revision = "HEAD"
 
