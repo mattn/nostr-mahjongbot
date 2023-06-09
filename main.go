@@ -24,6 +24,7 @@ import (
 
 	"math/rand"
 
+	"github.com/labstack/echo/middleware"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 	"github.com/nbd-wtf/go-nostr"
@@ -265,6 +266,7 @@ func main() {
 	}
 
 	e := echo.New()
+	e.Use(middleware.Logger())
 	e.POST("/api", func(c echo.Context) error {
 		ev := nostr.Event{}
 		err := json.NewDecoder(c.Request().Body).Decode(&ev)
