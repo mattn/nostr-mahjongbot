@@ -274,7 +274,17 @@ func main() {
 		enc.Encode(ev)
 
 		var g game
-		etag := ev.Tags.GetFirst([]string{"e"})
+		var etag *nostr.Tag
+		for i := 0; i < len(ev.Tags); i++ {
+			e := ev.Tags[i]
+			if e.Key() == "e" && len(e) > 2 && e[2] == "reply" {
+				etag = &e
+			}
+		}
+		if etag == nil {
+			etag = ev.Tags.GetFirst([]string{"e"})
+		}
+
 		if cmdHelp.MatchString(ev.Content) {
 			from := ev.PubKey
 
