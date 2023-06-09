@@ -24,8 +24,8 @@ import (
 
 	"math/rand"
 
-	"github.com/labstack/echo/middleware"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
 	"github.com/nbd-wtf/go-nostr"
 	"github.com/nbd-wtf/go-nostr/nip19"
@@ -312,8 +312,17 @@ func main() {
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
-			v, err := strconv.Atoi(ev.Content[len(ev.Content)-2:])
-			if err != nil {
+			matched := cmdDrop.FindStringSubmatch(ev.Content)
+			if len(matched) != 1 {
+				ev.Content = "不正な番号です"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+			v, err := strconv.Atoi(matched[0])
+			if len(matched) != 1 {
 				ev.Content = "不正な番号です"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
