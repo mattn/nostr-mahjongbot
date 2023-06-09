@@ -341,7 +341,7 @@ func main() {
 				return c.JSON(http.StatusOK, ev)
 			}
 			v, err := strconv.Atoi(matched[0])
-			if len(matched) != 1 {
+			if len(matched) != 1 || v < 1 || v > 9 {
 				ev.Content = "不正な番号です"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
