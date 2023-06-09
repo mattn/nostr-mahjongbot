@@ -32,6 +32,11 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
+const name = "nostr-mahjongbot"
+
+const version = "0.0.0"
+
+var revision = "HEAD"
 var (
 	cmdStart = regexp.MustCompile(` start$`)
 	cmdDrop  = regexp.MustCompile(` drop [0-9]$`)
