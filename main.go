@@ -265,6 +265,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	enc := json.NewEncoder(os.Stdout)
+
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.POST("/api", func(c echo.Context) error {
@@ -274,6 +276,7 @@ func main() {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
+		enc.Encode(ev)
 
 		var g game
 		etag := ev.Tags.GetFirst([]string{"e"})
