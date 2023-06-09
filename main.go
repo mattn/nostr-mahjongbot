@@ -280,13 +280,17 @@ func main() {
 		var g game
 		etag := ev.Tags.GetFirst([]string{"e"})
 		if etag == nil && cmdStart.MatchString(ev.Content) {
+			from := ev.PubKey
+
 			ev.PubKey = pub
+			ev.Tags = nostr.Tags{}
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
 			g.ID = ev.ID
-			g.Npub = ev.PubKey
+			g.Npub = from
 			g.Data.Mountain = []int{4, 4, 4, 4, 4, 4, 4, 4, 4}
 			for n := 0; n < 14; n++ {
 				g.take()
@@ -312,7 +316,9 @@ func main() {
 			from := ev.PubKey
 
 			ev.PubKey = pub
+			ev.Tags = nostr.Tags{}
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
