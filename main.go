@@ -8,7 +8,6 @@ import (
 	"embed"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"image"
 	"image/draw"
@@ -310,6 +309,8 @@ func main() {
 			}
 			return c.JSON(http.StatusOK, ev)
 		} else if etag != nil && cmdDrop.MatchString(ev.Content) {
+			from := ev.Pubkey
+
 			ev.PubKey = pub
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
 			ev.CreatedAt = nostr.Now()
@@ -343,11 +344,16 @@ func main() {
 				}
 				return c.JSON(http.StatusOK, ev)
 			}
+			if g.Npub != from {
+				ev.Content = "ゲームを始めたユーザではありません"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
 
 			if !g.drop(v) {
-				err = errors.New("bad")
-				log.Println(err)
-				return c.JSON(http.StatusInternalServerError, err.Error())
 				ev.Content = "牌を捨てる事ができません"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
@@ -369,7 +375,8 @@ func main() {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, err.Error())
 			}
-			g.Ref = ev.ID
+			g.ID = ev.ID
+			g.Ref = etag.Value()
 
 			_, err = tx.NewInsert().Model(&g).Exec(context.Background())
 			if err != nil {
