@@ -39,7 +39,7 @@ const version = "0.0.16"
 var revision = "HEAD"
 var (
 	cmdStart = regexp.MustCompile(`\bstart$`)
-	cmdDrop  = regexp.MustCompile(`\bdrop ([0-9])$`)
+	cmdDrop  = regexp.MustCompile(`\bdrop ([0-9]+)$`)
 	cmdCheck = regexp.MustCompile(`\bcheck$`)
 
 	//go:embed static
@@ -153,6 +153,7 @@ type game struct {
 	Npub          string    `bun:"npub,notnull" json:"npub"`
 	Data          Data      `bun:"data,type:jsonb" json:"data"`
 	Ref           string    `bun:"ref,notnull" json:"ref"`
+	Count         int       `bun:"count,notnull" json:"count"`
 	CreatedAt     time.Time `bun:"created_at,notnull,default:current_timestamp" json:"created_at"`
 }
 
@@ -278,6 +279,7 @@ func main() {
 			for n := 0; n < 14; n++ {
 				g.take()
 			}
+			g.Count++
 			_, err = bundb.NewInsert().Model(&g).Exec(context.Background())
 			if err != nil {
 				log.Println("fail insert", err)
@@ -306,7 +308,7 @@ func main() {
 			ev.Kind = nostr.KindTextNote
 
 			if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
-				ev.Content = "まだ開発中だよ"
+				ev.Content = "Still under development"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -316,7 +318,7 @@ func main() {
 
 			matched := cmdDrop.FindStringSubmatch(ev.Content)
 			if len(matched) != 2 {
-				ev.Content = "不正な番号です"
+				ev.Content = "Invalid command"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -325,7 +327,7 @@ func main() {
 			}
 			v, err := strconv.Atoi(matched[1])
 			if v < 1 || v > 9 {
-				ev.Content = "不正な番号です"
+				ev.Content = "Invalid number"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -335,7 +337,7 @@ func main() {
 
 			err = bundb.NewSelect().Model((*game)(nil)).Where("ID = ?", etag.Value()).Scan(context.Background(), &g)
 			if err != nil {
-				ev.Content = "不正な参照です"
+				ev.Content = "Invalid reference"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -343,7 +345,7 @@ func main() {
 				return c.JSON(http.StatusOK, ev)
 			}
 			if g.Npub != from {
-				ev.Content = "ゲームを始めたユーザではありません"
+				ev.Content = "You are not game owner"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -352,15 +354,21 @@ func main() {
 			}
 
 			if !g.drop(v - 1) {
-				log.Println(g.Data)
-				ev.Content = "牌を捨てる事ができません"
+				ev.Content = "No such tiles"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
 				}
 				return c.JSON(http.StatusOK, ev)
 			}
-			g.take()
+			if g.take() == -1 {
+				ev.Content = "No more tiles"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+			}
+			g.Count++
 
 			tx, err := bundb.Begin()
 			if err != nil {
@@ -406,7 +414,7 @@ func main() {
 			ev.Kind = nostr.KindTextNote
 
 			if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
-				ev.Content = "まだ開発中だよ"
+				ev.Content = "Still under development"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -416,7 +424,7 @@ func main() {
 
 			err = bundb.NewSelect().Model((*game)(nil)).Where("ID = ?", etag.Value()).Scan(context.Background(), &g)
 			if err != nil {
-				ev.Content = "不正な参照です"
+				ev.Content = "Invalid reference"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -424,17 +432,7 @@ func main() {
 				return c.JSON(http.StatusOK, ev)
 			}
 			if g.Npub != from {
-				ev.Content = "ゲームを始めたユーザではありません"
-				if err := ev.Sign(sk); err != nil {
-					log.Println(err)
-					return c.JSON(http.StatusInternalServerError, err.Error())
-				}
-				return c.JSON(http.StatusOK, ev)
-			}
-
-			result := g.judge()
-			if result == nil {
-				ev.Content = "判定ミス"
+				ev.Content = "You are not game owner"
 				if err := ev.Sign(sk); err != nil {
 					log.Println(err)
 					return c.JSON(http.StatusInternalServerError, err.Error())
@@ -456,7 +454,21 @@ func main() {
 			}
 			tx.Commit()
 
-			ev.Content = "アガリ"
+			result := g.judge()
+			if result == nil {
+				ev.Content = "Misjudge, game over"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+
+			if g.Count == 1 {
+				ev.Content = fmt.Sprint("Win, game over (天和)")
+			} else {
+				ev.Content = fmt.Sprintf("Win, game over (count: %d)", g.Count)
+			}
 			if err := ev.Sign(sk); err != nil {
 				log.Println(err)
 				return c.JSON(http.StatusInternalServerError, err.Error())
