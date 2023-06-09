@@ -192,7 +192,7 @@ func upload(buf *bytes.Buffer) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(b), nil
+	return string(b) + ".png", nil
 }
 
 func makeImage(hai []int) (string, error) {
