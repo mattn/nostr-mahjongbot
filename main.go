@@ -322,6 +322,15 @@ func main() {
 			ev.CreatedAt = nostr.Now()
 			ev.Kind = nostr.KindTextNote
 
+			if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
+				ev.Content = "まだ開発中だよ"
+				if err := ev.Sign(sk); err != nil {
+					log.Println(err)
+					return c.JSON(http.StatusInternalServerError, err.Error())
+				}
+				return c.JSON(http.StatusOK, ev)
+			}
+
 			matched := cmdDrop.FindStringSubmatch(ev.Content)
 			if len(matched) != 1 {
 				ev.Content = "不正な番号です"
