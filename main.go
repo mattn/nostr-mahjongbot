@@ -332,7 +332,6 @@ func main() {
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
-			ev.Kind = nostr.KindTextNote
 
 			ev.Content = help
 			if err := ev.Sign(sk); err != nil {
@@ -349,7 +348,6 @@ func main() {
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
-			ev.Kind = nostr.KindTextNote
 
 			g.Npub = from
 			g.Data.Mountain = []int{4, 4, 4, 4, 4, 4, 4, 4, 4}
@@ -385,7 +383,6 @@ func main() {
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
-			ev.Kind = nostr.KindTextNote
 
 			//if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
 			//	ev.Content = "Still under development"
@@ -485,7 +482,6 @@ func main() {
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
 			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
-			ev.Kind = nostr.KindTextNote
 
 			//if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
 			//	ev.Content = "Still under development"
