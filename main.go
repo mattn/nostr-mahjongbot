@@ -330,11 +330,11 @@ func main() {
 			ev.PubKey = pub
 			if ev.Kind == nostr.KindTextNote {
 				ev.Tags = nostr.Tags{}
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			} else {
 				ev.Tags = ev.Tags.FilterOut([]string{"e", "p"})
 			}
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
 
 			ev.Content = help
@@ -350,11 +350,11 @@ func main() {
 			ev.PubKey = pub
 			if ev.Kind == nostr.KindTextNote {
 				ev.Tags = nostr.Tags{}
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			} else {
 				ev.Tags = ev.Tags.FilterOut([]string{"e", "p"})
 			}
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
 
 			g.Npub = from
@@ -389,11 +389,11 @@ func main() {
 			ev.PubKey = pub
 			if ev.Kind == nostr.KindTextNote {
 				ev.Tags = nostr.Tags{}
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			} else {
 				ev.Tags = ev.Tags.FilterOut([]string{"e", "p"})
 			}
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
 
 			//if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
@@ -492,11 +492,11 @@ func main() {
 			ev.PubKey = pub
 			if ev.Kind == nostr.KindTextNote {
 				ev.Tags = nostr.Tags{}
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
-				ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			} else {
 				ev.Tags = ev.Tags.FilterOut([]string{"e", "p"})
 			}
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"e", ev.ID})
+			ev.Tags = ev.Tags.AppendUnique(nostr.Tag{"p", from})
 			ev.CreatedAt = nostr.Now()
 
 			//if from != "2c7cc62a697ea3a7826521f3fd34f0cb273693cbe5e9310f35449f43622a5cdc" {
