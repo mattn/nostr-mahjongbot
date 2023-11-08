@@ -12,6 +12,7 @@ import (
 	"image"
 	"image/draw"
 	"image/png"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -303,6 +304,12 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
+
+	fsys, err := fs.Sub(assets, "static")
+	if err != nil {
+		log.Fatal(err)
+	}
+	e.GET("/", echo.WrapHandler(http.FileServer(http.FS(fsys))))
 	e.POST("/api", func(c echo.Context) error {
 		ev := nostr.Event{}
 		err := json.NewDecoder(c.Request().Body).Decode(&ev)
